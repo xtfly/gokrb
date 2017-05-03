@@ -42,36 +42,39 @@ Example Kerberos client authentication to service:
             println("Init error=>", err)
             return 
         }
+        defer ctx.Close()
 
         // firstly create a token
-        t, err := ctx.Step(nil)
+        t, ctu, err := ctx.Step(nil)
         if err != nil {
             println("Step error=>", err)
             return 
         }
 
-        err = gokrb.SendToken(conn, t)
-        if err != nil {
-            println("SendToken error=>", err)
-            return 
-        }
+        for ctu {
+            err = gokrb.SendToken(conn, t)
+            if err != nil {
+                println("SendToken error=>", err)
+                return 
+            }
 
-        t, err := gokrb.RecvToken(conn)
-        if err != nil {
-            println("SendToken error=>", err)
-            return 
-        }
+            t, err := gokrb.RecvToken(conn)
+            if err != nil {
+                println("SendToken error=>", err)
+                return 
+            }
 
-        t, err = ctx.Step(t)
-        if err != nil {
-            println("Step error=>", err)
-            return 
-        }
+            t, err = ctx.Step(t)
+            if err != nil {
+                println("Step error=>", err)
+                return 
+            }
 
-        err = gokrb.SendToken(conn, t)
-        if err != nil {
-            println("SendToken error=>", err)
-            return 
+            err = gokrb.SendToken(conn, t)
+            if err != nil {
+                println("SendToken error=>", err)
+                return 
+            }
         }
     }
 

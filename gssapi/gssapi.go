@@ -16,7 +16,6 @@ typedef struct {
     gss_name_t       server_name;
 	gss_cred_id_t    client_creds;
     long int         gss_flags;
-    char*            username;
     char*            response;
 } gss_client_state;
 
@@ -116,6 +115,7 @@ func Init(service string) (*Context, error) {
 		nil)
 
 	if majStat != 0 {
+		C.gss_release_name(&minStat, &state.server_name)
 		return nil, gssError(majStat, minStat)
 	}
 
@@ -123,7 +123,11 @@ func Init(service string) (*Context, error) {
 }
 
 // Step processes a single GSSAPI client-side step using the supplied server data.
-func (c *Context) Step(challenge []byte) ([]byte, error) {
+// retrun param :
+// 1 []byte: token will send to serivce
+// 2 bool, need continue
+// 3 error, occurs a error
+func (c *Context) Step(challenge []byte) ([]byte, bool, error) {
 	var majStat C.OM_uint32
 	var minStat C.OM_uint32
 	var inputToken C.gss_buffer_desc
@@ -146,7 +150,7 @@ func (c *Context) Step(challenge []byte) ([]byte, error) {
 	// Do GSSAPI step
 	majStat = C.gss_init_sec_context(
 		&minStat,
-		c.state.client_creds, // GSS_C_NO_CREDENTIAL,
+		c.state.client_creds,
 		&c.state.context,
 		c.state.server_name,
 		nil, // GSS_C_NO_OID,
@@ -159,17 +163,21 @@ func (c *Context) Step(challenge []byte) ([]byte, error) {
 		nil,
 		nil)
 
+	ctu := false
+	if majStat == C.GSS_S_CONTINUE_NEEDED {
+		ctu = true
+	}
 	if majStat != C.GSS_S_COMPLETE && majStat != C.GSS_S_CONTINUE_NEEDED {
-		return nil, gssError(majStat, minStat)
+		return nil, ctu, gssError(majStat, minStat)
 	}
 
 	if outputToken.length > 0 {
 		gbytes := C.GoBytes(unsafe.Pointer(outputToken.value), (_Ctype_int)(outputToken.length))
 		majStat = C.gss_release_buffer(&minStat, &outputToken)
-		return gbytes, nil
+		return gbytes, ctu, nil
 	}
 
-	return nil, nil
+	return nil, ctu, nil
 }
 
 // Close to free all object memory
