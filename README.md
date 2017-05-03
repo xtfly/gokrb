@@ -1,5 +1,4 @@
 # GoKrb
------
 
 A go wrapper for Kerberos.
 
@@ -8,9 +7,7 @@ Currently the implemention:
 
 Note: It is developing...
 
------
 # Usage
------
 
 Note: You need to install the krb5-libs packages and gcc into your OS,
 like this in Archlinux:
@@ -84,9 +81,7 @@ Note: if the krb5 is not install in /usr/lib64 and /usr/include, you need set fo
     $ export CGO_LDFLAG=-L/path/to/lib
     $ export LD_LIBRARY_PATH=/path/to/lib
 
--------
 # License
--------
 
 Gorkb is released under the MIT License. See the LICENSE file.
 
