@@ -1,15 +1,15 @@
 # GoKrb
 
-A go wrapper for Kerberos.
+A go wrapper for Kerberos and SASL2 libs.
 
 Currently the implemention:  
-- Client side APIs that supports authentication to service that implement GSSAPI using Kerberos 5.
+- Client side APIs that use SASL APIs for authentication to service that implement GSSAPI using Kerberos 5.
 
 Note: It is developing...
 
 # Usage
 
-Note: You need to install the krb5-libs packages and gcc into your OS,
+Note: You need to install the krb5-libs, sasl2-libs, gcc into your OS,
 like this in Archlinux:
 
     $ sudo pacman -S krb5
@@ -32,53 +32,20 @@ Example Kerberos client authentication to service:
     package main
 
     import (
-        "github.com/xtfly/gokrb"
         "github.com/xtfly/gokrb/gssapi"
     )
 
-    func auth(conn io.ReadWriter) {
-        ctx, err := gssapi.Init("kafka/hadoop.com@HADOOP.COM")
+    func main() {
+        var conn io.ReadWriter
+        //...
+        // create a connection to service
+        err := gssapi.GssAuth(conn, "kafka", "hadoop.com")
         if err != nil {
-            println("Init error=>", err)
-            return 
-        }
-        defer ctx.Close()
-
-        // firstly create a token
-        t, ctu, err := ctx.Step(nil)
-        if err != nil {
-            println("Step error=>", err)
-            return 
-        }
-        
-        err = gokrb.SendToken(conn, t)
-        if err != nil {
-            println("SendToken error=>", err)
-            return 
-        }
-
-        for ctu {
-            t, err := gokrb.RecvToken(conn)
-            if err != nil {
-                println("SendToken error=>", err)
-                return 
-            }
-
-            t, ctu, err = ctx.Step(t)
-            if err != nil {
-                println("Step error=>", err)
-                return 
-            }
-
-            err = gokrb.SendToken(conn, t)
-            if err != nil {
-                println("SendToken error=>", err)
-                return 
-            }
+            // do something ...
         }
     }
 
-Note: if the krb5 is not install in /usr/lib64 and /usr/include, you need set follow environment variables:
+Note: if the krb5-libs/sasl2-libs are not install in /usr/lib64 and /usr/include, you need set follow environment variables:
 
     $ export CGO_CFLAG=-I/path/to/include
     $ export CGO_LDFLAG=-L/path/to/lib
