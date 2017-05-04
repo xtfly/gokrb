@@ -59,6 +59,7 @@ func GssAuth(rw io.ReadWriter, service string, realm string) error {
 	if errCode != C.SASL_OK {
 		return fmt.Errorf("sasl_client_init failed")
 	}
+	defer C.sasl_client_done()
 
 	var ctx *C.sasl_conn_t
 
@@ -79,7 +80,6 @@ func GssAuth(rw io.ReadWriter, service string, realm string) error {
 	if errCode != C.SASL_OK {
 		return fmt.Errorf("sasl_client_new cannot establish new context, %v", saslErr(ctx))
 	}
-
 	defer C.sasl_dispose(&ctx)
 
 	var out *C.char
@@ -97,7 +97,6 @@ func GssAuth(rw io.ReadWriter, service string, realm string) error {
 	if errCode != C.SASL_OK {
 		return fmt.Errorf("sasl_client_start failed, %v", saslErr(ctx))
 	}
-	defer C.sasl_client_done()
 
 	// send initial requestToken
 	reqtoken := C.GoBytes(unsafe.Pointer(out), C.int(outlen))
