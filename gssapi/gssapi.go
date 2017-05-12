@@ -80,7 +80,7 @@ func GssAuth(rw io.ReadWriter, service string, realm string) error {
 	if errCode != C.SASL_OK {
 		return fmt.Errorf("sasl_client_new cannot establish new context, %v", saslErr(ctx))
 	}
-	defer C.sasl_dispose(&ctx)
+	//defer C.sasl_dispose(&ctx)
 
 	var out *C.char
 	var outlen C.uint
@@ -94,9 +94,10 @@ func GssAuth(rw io.ReadWriter, service string, realm string) error {
 		&outlen,
 		nil)
 
-	if errCode != C.SASL_OK {
+	if errCode != C.SASL_OK && errCode != C.SASL_CONTINUE {
 		return fmt.Errorf("sasl_client_start failed, %v", saslErr(ctx))
 	}
+	defer C.free(unsafe.Pointer(out))
 
 	// send initial requestToken
 	reqtoken := C.GoBytes(unsafe.Pointer(out), C.int(outlen))
